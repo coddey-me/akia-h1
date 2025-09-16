@@ -19,6 +19,8 @@ import coolname
 import hydra
 import pydantic
 from omegaconf import DictConfig
+from omegaconf import OmegaConf, DictConfig
+
 from adam_atan2 import AdamATan2
 
 from pydantic import BaseModel
