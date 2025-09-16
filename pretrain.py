@@ -53,7 +53,7 @@ class ArchConfig(pydantic.BaseModel):
     expansion: Optional[int] = None
     puzzle_emb_ndim: Optional[int] = None
     pos_encodings: Optional[str] = None
-
+    vocab_size: Optional[int] = Non
  
     hidden_dim: Optional[int] = None 
      
