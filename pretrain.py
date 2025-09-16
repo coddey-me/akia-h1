@@ -150,15 +150,14 @@ def create_dataloader(config: PretrainConfig, split: str, rank: int, world_size:
 
 
 def create_model(config: PretrainConfig, train_metadata: PuzzleDatasetMetadata, world_size: int):
+    arch_cfg = instantiate(config.arch)
     model_cfg = dict(
-        **config.arch.__pydantic_extra__,  # type: ignore
-
         batch_size=config.global_batch_size // world_size,
-
         vocab_size=train_metadata.vocab_size,
         seq_len=train_metadata.seq_len,
         num_puzzle_identifiers=train_metadata.num_puzzle_identifiers,
-        causal=False  # Non-autoregressive
+        causal=False,
+        **arch_cfg.dict(exclude={"loss"})  # or use vars(arch_cfg) to get dict
     )
 
     # Instantiate model with loss head
