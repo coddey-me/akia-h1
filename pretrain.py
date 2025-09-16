@@ -25,11 +25,6 @@ from puzzle_dataset import PuzzleDataset, PuzzleDatasetConfig, PuzzleDatasetMeta
 from utils.functions import load_model_class, get_model_source_path
 from models.sparse_embedding import CastedSparseEmbeddingSignSGD_Distributed
 
-cs = ConfigStore.instance()
-cs.store(name="loss_config", node=LossConfig)
-cs.store(name="arch_config", node=ArchConfig)
-cs.store(name="pretrain_config", node=PretrainConfig)
-
 
 class LossConfig(pydantic.BaseModel):
     model_config = pydantic.ConfigDict(extra='allow')
@@ -77,6 +72,11 @@ class PretrainConfig(pydantic.BaseModel):
     eval_interval: Optional[int] = None
     eval_save_outputs: List[str] = []
 
+
+cs = ConfigStore.instance()
+cs.store(name="loss_config", node=LossConfig)
+cs.store(name="arch_config", node=ArchConfig)
+cs.store(name="pretrain_config", node=PretrainConfig)
 
 @dataclass
 class TrainState:
