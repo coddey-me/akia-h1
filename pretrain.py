@@ -398,7 +398,7 @@ def save_code_and_config(config: PretrainConfig):
 def load_synced_config(hydra_config: DictConfig, rank: int, world_size: int) -> PretrainConfig:
     objects = [None]
     if rank == 0:
-        config = PretrainConfig(**hydra_config)  # type: ignore
+        config = instantiate(hydra_config)  # type: ignore
 
         # Naming
         if config.project_name is None:
