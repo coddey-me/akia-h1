@@ -55,7 +55,7 @@ class ArchConfig(pydantic.BaseModel):
     pos_encodings: Optional[str] = None
 
  
-    #hidden_dim: Optional[int] = None 
+    hidden_dim: Optional[int] = None 
      
 
 @dataclass
