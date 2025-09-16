@@ -18,7 +18,10 @@ import pydantic
 from omegaconf import DictConfig
 from adam_atan2 import AdamATan2
 
+from pydantic import BaseModel
+from hydra_zen import builds, instantiate
 from hydra.core.config_store import ConfigStore
+import hydra
 
 
 from puzzle_dataset import PuzzleDataset, PuzzleDatasetConfig, PuzzleDatasetMetadata
@@ -93,11 +96,15 @@ class PretrainConfig(pydantic.BaseModel):
     eval_interval: Optional[int] = None
     eval_save_outputs: List[str] = []
 
+HydraLossConfig = builds(LossConfig, populate_full_signature=True)
+HydraArchConfig = builds(ArchConfig, populate_full_signature=True)
+HydraPretrainConfig = builds(PretrainConfig, populate_full_signature=True)
 
+cs = ConfigStore.instance()
+cs.store(name="pretrain_config", node=HydraPretrainConfig)
 cs = ConfigStore.instance()
 cs.store(name="loss_config", node=LossConfig)
 cs.store(name="arch_config", node=ArchConfig)
-cs.store(name="pretrain_config", node=PretrainConfig)
 
 @dataclass
 class TrainState:
