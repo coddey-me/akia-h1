@@ -96,7 +96,7 @@ class PretrainConfig(pydantic.BaseModel):
     eval_interval: Optional[int] = None
     eval_save_outputs: List[str] = []
 
-    HYDRA_FULL_ERROR=1
+    HYDRA_FULL_ERROR= ClassVar[int] = 1
 
 HydraLossConfig = builds(LossConfig, populate_full_signature=True)
 HydraArchConfig = builds(ArchConfig, populate_full_signature=True)
