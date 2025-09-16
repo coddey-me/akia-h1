@@ -18,9 +18,17 @@ import pydantic
 from omegaconf import DictConfig
 from adam_atan2 import AdamATan2
 
+from hydra.core.config_store import ConfigStore
+
+
 from puzzle_dataset import PuzzleDataset, PuzzleDatasetConfig, PuzzleDatasetMetadata
 from utils.functions import load_model_class, get_model_source_path
 from models.sparse_embedding import CastedSparseEmbeddingSignSGD_Distributed
+
+cs = ConfigStore.instance()
+cs.store(name="loss_config", node=LossConfig)
+cs.store(name="arch_config", node=ArchConfig)
+cs.store(name="pretrain_config", node=PretrainConfig)
 
 
 class LossConfig(pydantic.BaseModel):
@@ -31,7 +39,7 @@ class LossConfig(pydantic.BaseModel):
 
 class ArchConfig(pydantic.BaseModel):
     model_config = pydantic.ConfigDict(extra='allow')
-
+    hidden_dim: Optional[int] = None 
     name: str
     loss: LossConfig
 
@@ -376,8 +384,7 @@ def load_synced_config(hydra_config: DictConfig, rank: int, world_size: int) -> 
 
     return objects[0]  # type: ignore
 
-
-@hydra.main(config_path="config", config_name="cfg_pretrain", version_base=None)
+@hydra.main(config_path="config", config_name="pretrain_config", version_base=None)
 def launch(hydra_config: DictConfig):
     RANK = 0
     WORLD_SIZE = 1
