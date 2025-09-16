@@ -148,6 +148,7 @@ def create_dataloader(config: PretrainConfig, split: str, rank: int, world_size:
 
 # Import your Pydantic LossConfig class as appropriate
 # from your_module import LossConfig
+
 from omegaconf import OmegaConf
 from hydra_zen import instantiate
 
@@ -158,6 +159,10 @@ def create_model(config: PretrainConfig, train_metadata: PuzzleDatasetMetadata, 
     # Extract and instantiate the nested loss config
     loss_dict = arch_dict.pop("loss", None)
     loss_cfg = instantiate(loss_dict) if loss_dict else None
+
+    # Remove keys that are explicitly assigned later to avoid duplicates
+    for key in ["vocab_size", "seq_len", "num_puzzle_identifiers", "causal", "batch_size"]:
+        arch_dict.pop(key, None)
 
     # Prepare the model config dictionary, adding required metadata
     model_cfg = dict(
@@ -184,7 +189,7 @@ def create_model(config: PretrainConfig, train_metadata: PuzzleDatasetMetadata, 
     optimizers = [
         CastedSparseEmbeddingSignSGD_Distributed(
             model.model.puzzle_emb.buffers(),
-            lr=0,  # overridden by scheduler later
+            lr=0,  # will be set later by scheduler
             weight_decay=config.puzzle_emb_weight_decay,
             world_size=world_size,
         ),
