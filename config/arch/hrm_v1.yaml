@@ -18,6 +18,7 @@ hidden_size: 512
 num_heads: 8  # min(2, hidden_size // 64)
 num_layers: 8
 expansion: 4
+vocab_size: 32000 
 
 #puzzle_emb_ndim: ${.hidden_size}
 puzzle_emb_ndim: ${.hidden_dim}
