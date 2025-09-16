@@ -110,6 +110,7 @@ cs.store(name="pretrain_config", node=HydraPretrainConfig)
 cs = ConfigStore.instance()
 cs.store(name="loss_config", node=LossConfig)
 cs.store(name="arch_config", node=ArchConfig)
+cs.store(name="pretrain_config", node=HydraPretrainConfig)
 
 @dataclass
 class TrainState:
