@@ -25,18 +25,38 @@ from puzzle_dataset import PuzzleDataset, PuzzleDatasetConfig, PuzzleDatasetMeta
 from utils.functions import load_model_class, get_model_source_path
 from models.sparse_embedding import CastedSparseEmbeddingSignSGD_Distributed
 
+from typing import Optional
+import pydantic
+
 @dataclass
 class LossConfig(pydantic.BaseModel):
     model_config = pydantic.ConfigDict(extra='allow')
-    
+
     name: str
+    loss_type: Optional[str] = None
 
 @dataclass
 class ArchConfig(pydantic.BaseModel):
     model_config = pydantic.ConfigDict(extra='allow')
-    hidden_dim: Optional[int] = None 
+
     name: str
     loss: LossConfig
+
+    halt_exploration_prob: Optional[float] = None
+    halt_max_steps: Optional[int] = None
+    H_cycles: Optional[int] = None
+    L_cycles: Optional[int] = None
+    H_layers: Optional[int] = None
+    L_layers: Optional[int] = None
+    hidden_size: Optional[int] = None
+    num_heads: Optional[int] = None
+    expansion: Optional[int] = None
+    puzzle_emb_ndim: Optional[int] = None
+    pos_encodings: Optional[str] = None
+
+ 
+    #hidden_dim: Optional[int] = None 
+     
 
 @dataclass
 class PretrainConfig(pydantic.BaseModel):
