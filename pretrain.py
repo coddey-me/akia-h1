@@ -41,7 +41,8 @@ class ArchConfig(pydantic.BaseModel):
 @dataclass
 class PretrainConfig(pydantic.BaseModel):
     # Config
-    arch: ArchConfig
+    #arch: ArchConfig
+    arch: Optional[ArchConfig] = None
     # Data
     data_path: str
 
