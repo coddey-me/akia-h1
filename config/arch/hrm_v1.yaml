@@ -12,10 +12,13 @@ L_cycles: 2
 H_layers: 4
 L_layers: 4
 
+hidden_dim: 512
+
 hidden_size: 512
 num_heads: 8  # min(2, hidden_size // 64)
 expansion: 4
 
-puzzle_emb_ndim: ${.hidden_size}
+#puzzle_emb_ndim: ${.hidden_size}
+puzzle_emb_ndim: ${.hidden_dim}
 
 pos_encodings: rope
