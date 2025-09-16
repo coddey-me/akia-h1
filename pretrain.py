@@ -158,8 +158,8 @@ def create_model(config: PretrainConfig, train_metadata: PuzzleDatasetMetadata, 
         num_puzzle_identifiers=train_metadata.num_puzzle_identifiers,
         causal=False,
         arch_cfg = instantiate(config.arch),  # instantiate to pydantic model
-        arch_dict = arch_cfg.dict(exclude={"loss"})
-        ...
+        arch_dict = arch_cfg.dict(exclude={"loss"}),
+        
 # then unpack arch_dict safely
   # or use vars(arch_cfg) to get dict
     )
