@@ -5,6 +5,8 @@ import math
 import yaml
 import shutil
 from typing import ClassVar
+from hydra_zen import instantiate
+
 
 import torch
 import torch.distributed as dist
