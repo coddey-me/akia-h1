@@ -146,23 +146,20 @@ def create_dataloader(config: PretrainConfig, split: str, rank: int, world_size:
     )
     return dataloader, dataset.metadata
 
-
-from omegaconf import OmegaConf
-from hydra_zen import instantiate
 # Import your Pydantic LossConfig class as appropriate
 # from your_module import LossConfig
+from omegaconf import OmegaConf
+from hydra_zen import instantiate
 
 def create_model(config: PretrainConfig, train_metadata: PuzzleDatasetMetadata, world_size: int):
-    # Convert OmegaConf DictConfig to a plain Python dict
+    # Convert config.arch OmegaConf dict to plain Python dict with interpolation resolved
     arch_dict = OmegaConf.to_container(config.arch, resolve=True)
 
-    # Extract and convert loss config part to Pydantic manually
+    # Extract and instantiate the nested loss config
     loss_dict = arch_dict.pop("loss", None)
-    if loss_dict is not None:
-        loss_cfg = instantiate(loss_dict)
-    else:
-        loss_cfg = None
+    loss_cfg = instantiate(loss_dict) if loss_dict else None
 
+    # Prepare the model config dictionary, adding required metadata
     model_cfg = dict(
         batch_size=config.global_batch_size // world_size,
         vocab_size=train_metadata.vocab_size,
@@ -171,57 +168,36 @@ def create_model(config: PretrainConfig, train_metadata: PuzzleDatasetMetadata, 
         causal=False,
         **arch_dict
     )
+
+    # Load model and loss classes
     model_cls = load_model_class(model_cfg["name"])
+    loss_head_cls = load_model_class(loss_cfg.name) if loss_cfg else None
 
-    if loss_cfg is not None:
-        loss_head_cls = load_model_class(loss_cfg.name)
-    else:
-        loss_head_cls = None
-
-    # Instantiate your model and loss head here, for example:
+    # Instantiate model
     model = model_cls(model_cfg)
+
+    # Wrap with loss head if available
     if loss_head_cls is not None:
-        model = loss_head_cls(model, **loss_cfg.__dict__)  # or appropriate kwargs
+        model = loss_head_cls(model, **loss_cfg.__dict__)
 
-    # Return the model. You can also return optimizers and other states as your original code does
-  # Adjust if you return optimizers etc.
-
-    
-
-
-    with torch.device("cuda"):
-        model: nn.Module = model_cls(model_cfg)
-        model = loss_head_cls(model, **config.arch.loss.__pydantic_extra__)  # type: ignore
-        if "DISABLE_COMPILE" not in os.environ:
-            model = torch.compile(model, dynamic=False)  # type: ignore
-
-        # Broadcast parameters from rank 0
-        if world_size > 1:
-            with torch.no_grad():
-                for param in list(model.parameters()) + list(model.buffers()):
-                    dist.broadcast(param, src=0)
-
-    # Optimizers and lr
+    # Create optimizers as original code (you can keep your optimizer creation logic here)
     optimizers = [
         CastedSparseEmbeddingSignSGD_Distributed(
-            model.model.puzzle_emb.buffers(),  # type: ignore
-            
-            lr=0,  # Needs to be set by scheduler
+            model.model.puzzle_emb.buffers(),
+            lr=0,  # overridden by scheduler later
             weight_decay=config.puzzle_emb_weight_decay,
-
-            world_size=world_size
+            world_size=world_size,
         ),
         AdamATan2(
             model.parameters(),
-
-            lr=0,  # Needs to be set by scheduler
+            lr=0,
             weight_decay=config.weight_decay,
-            betas=(config.beta1, config.beta2)
-        )
+            betas=(config.beta1, config.beta2),
+        ),
     ]
     optimizer_lrs = [
         config.puzzle_emb_lr,
-        config.lr
+        config.lr,
     ]
 
     return model, optimizers, optimizer_lrs
