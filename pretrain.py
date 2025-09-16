@@ -147,19 +147,45 @@ def create_dataloader(config: PretrainConfig, split: str, rank: int, world_size:
     return dataloader, dataset.metadata
 
 
+from omegaconf import OmegaConf
+from hydra_zen import instantiate
+# Import your Pydantic LossConfig class as appropriate
+# from your_module import LossConfig
+
 def create_model(config: PretrainConfig, train_metadata: PuzzleDatasetMetadata, world_size: int):
-    arch_cfg = instantiate(config.arch)
-    loss_cfg = instantiate(arch_cfg.loss)
+    # Convert OmegaConf DictConfig to a plain Python dict
+    arch_dict = OmegaConf.to_container(config.arch, resolve=True)
+
+    # Extract and convert loss config part to Pydantic manually
+    loss_dict = arch_dict.pop("loss", None)
+    if loss_dict is not None:
+        loss_cfg = instantiate(loss_dict)
+    else:
+        loss_cfg = None
+
     model_cfg = dict(
         batch_size=config.global_batch_size // world_size,
         vocab_size=train_metadata.vocab_size,
         seq_len=train_metadata.seq_len,
         num_puzzle_identifiers=train_metadata.num_puzzle_identifiers,
         causal=False,
-        **{k: v for k, v in arch_cfg.dict().items() if k != "loss"}  # unpack all except loss
+        **arch_dict
     )
-    model_cls = load_model_class(arch_cfg.name)
-    loss_head_cls = load_model_class(loss_cfg.name)
+    model_cls = load_model_class(model_cfg["name"])
+
+    if loss_cfg is not None:
+        loss_head_cls = load_model_class(loss_cfg.name)
+    else:
+        loss_head_cls = None
+
+    # Instantiate your model and loss head here, for example:
+    model = model_cls(model_cfg)
+    if loss_head_cls is not None:
+        model = loss_head_cls(model, **loss_cfg.__dict__)  # or appropriate kwargs
+
+    # Return the model. You can also return optimizers and other states as your original code does
+  # Adjust if you return optimizers etc.
+
     
 
 
