@@ -108,8 +108,6 @@ HydraArchConfig = builds(ArchConfig, populate_full_signature=True)
 HydraPretrainConfig = builds(PretrainConfig, populate_full_signature=True)
 
 cs = ConfigStore.instance()
-cs.store(name="pretrain_config", node=HydraPretrainConfig)
-cs = ConfigStore.instance()
 cs.store(name="loss_config", node=LossConfig)
 cs.store(name="arch_config", node=ArchConfig)
 cs.store(name="pretrain_config", node=HydraPretrainConfig)
@@ -151,22 +149,19 @@ def create_dataloader(config: PretrainConfig, split: str, rank: int, world_size:
 
 def create_model(config: PretrainConfig, train_metadata: PuzzleDatasetMetadata, world_size: int):
     arch_cfg = instantiate(config.arch)
+    loss_cfg = instantiate(arch_cfg.loss)
     model_cfg = dict(
         batch_size=config.global_batch_size // world_size,
         vocab_size=train_metadata.vocab_size,
         seq_len=train_metadata.seq_len,
         num_puzzle_identifiers=train_metadata.num_puzzle_identifiers,
         causal=False,
-        arch_cfg = instantiate(config.arch),  # instantiate to pydantic model
-        arch_dict = arch_cfg.dict(exclude={"loss"}),
-        
-# then unpack arch_dict safely
-  # or use vars(arch_cfg) to get dict
+        **{k: v for k, v in arch_cfg.dict().items() if k != "loss"}  # unpack all except loss
     )
+    model_cls = load_model_class(arch_cfg.name)
+    loss_head_cls = load_model_class(loss_cfg.name)
+    
 
-    # Instantiate model with loss head
-    model_cls = load_model_class(config.arch.name)
-    loss_head_cls = load_model_class(config.arch.loss.name)
 
     with torch.device("cuda"):
         model: nn.Module = model_cls(model_cfg)
